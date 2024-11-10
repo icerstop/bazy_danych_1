@@ -1,0 +1,155 @@
+1. alter table projekty
+add constraint pk_projekty primary key (id_projektu);
+
+alter table projekty
+add constraint uk_projekty unique (opis_projektu);
+
+alter table projekty
+modify opis_projektu not null;
+
+alter table projekty
+add constraint chk_data_projekty check(data_zakonczenia > data_rozpoczecia);
+
+alter table projekty
+add constraint chk_fundusz_projekty check (fundusz > 0 or fundusz is null)
+
+select uc.constraint_name,
+    uc.constraint_type,
+    uc.search_condition,
+    ucc.column_name
+from user_constraints uc
+join user_cons_columns ucc 
+on uc.constraint_name = ucc.constraint_name 
+where uc.table_name = 'PROJEKTY'
+order by uc.constraint_name
+
+2. insert into projekty (opis_projektu, data_rozpoczecia, data_zakonczenia, fundusz)
+values ('Indeksy bitmapowe', '15/04/12', '16/09/30', 40000)
+
+Zakończyło się niepowodzeniem, przyczyną jest uk_projekty -> klucz miał być unikalny, a my użyliśmy opis projektu, który już był użyty.
+
+3. create table przydzialy (
+    id_projektu int not null,
+    nr_pracownika int not null,
+    przydzial_od date default current_date,
+    przydzial_do date,
+    stawka decimal(7,2),
+    rola varchar2(20),
+    constraint fk_przydzialy_01 foreign key (id_projektu) references projekty(id_projektu),
+    constraint fk_przydzialy_02 foreign key (nr_pracownika) references pracownicy(id_prac),
+    constraint chk_przydzialy_daty check (przydzial_do > przydzial_od),
+    constraint chk_przydzialy_stawka check (stawka > 0),
+    constraint chk_prydzialy_rola check (rola in('KIERUJĄCY', 'ANALITYK', 'PROGRAMISTA'))
+)
+
+4. insert into przydzialy (id_projektu, nr_pracownika, przydzial_od, przydzial_do, stawka, rola)
+values((select id_projektu from projekty where opis_projektu = 'Indeksy bitmapowe'), 170, '99/04/10', '99/05/10', 1000, 'KIERUJĄCY');
+
+insert into przydzialy (id_projektu, nr_pracownika, przydzial_od, przydzial_do, stawka, rola)
+values((select id_projektu from projekty where opis_projektu = 'Indeksy bitmapowe'), 140, '00/12/01', NULL, 1500, 'ANALITYK');
+
+insert into przydzialy (id_projektu, nr_pracownika, przydzial_od, przydzial_do, stawka, rola)
+values((select id_projektu from projekty where opis_projektu = 'Sieci kręgosłupowe'), 140, '15/09/14', NULL, 2500, 'KIERUJĄCY');
+
+5. alter table przydzialy
+add godziny int not null check (godziny <= 9999);
+
+Błąd: muszą być jakieś wartości, skoro jest warunek not null.
+
+poprawiłem na add godziny int default 0 not null check (godziny <= 9999) - wtedy działa, bo nie ma wartości null
+
+6. alter table przydzialy
+add godziny int
+
+
+update przydzialy
+set godziny = 40
+where id_projektu = (select id_projektu from projekty where opis_projektu = 'Indeksy bitmapowe')
+and nr_pracownika = 170;
+
+update przydzialy
+set godziny = 35
+where id_projektu = (select id_projektu from projekty where opis_projektu = 'Indeksy bitmapowe')
+and nr_pracownika = 140;
+
+update przydzialy
+set godziny = 30
+where id_projektu = (select id_projektu from projekty where opis_projektu = 'Sieci kręgosłupowe')
+and nr_pracownika = 140;
+
+alter table przydzialy
+modify godziny int default 0 not null check (godziny<=9999);
+
+7. alter table projekty
+disable constraint uk_projekty;
+
+select constraint_name, status
+from user_constraints
+where table_name = 'PROJEKTY'
+and constraint_name = 'UK_PROJEKTY';
+
+
+8. insert into projekty (opis_projektu, data_rozpoczecia, data_zakonczenia, fundusz)
+values ('Indeksy bitmapowe', '15/04/12', '16/09/30', 40000);
+
+Powiodło się.
+
+select * from projekty;
+
+9. alter table projekty
+enable constraint uk_projekty;
+
+Nie powiodło się, ponieważ istnieje duplikat.
+
+10. update projekty
+set opis_projektu = 'Inne indeksy'
+where opis_projektu = 'Indeksy bitmapowe'
+and data_rozpoczecia = '15/04/12'
+and data_zakonczenia = '16/09/30'
+and fundusz = 40000;
+
+alter table projekty 
+enable constraint uk_projekty;
+
+Teraz udało się włączyć ograniczenie, ponieważ nie ma duplikatów w opis_projektu.
+
+11. alter table projekty 
+modify opis_projektu varchar2(10);
+
+Nie udało się tego zrobić, ponieważ w kolumnie opis_projektu znajdują się nazwy dłuższe niż 10 znaków.
+
+12. delete from projekty 
+where opis_projektu = 'Sieci kręgosłupowe';
+
+Nie można usunąć, ponieważ opis_projektu jest używany przez relację przydziały (klucz obcy - fk_przydzialy_01).
+
+13. alter table przydzialy
+drop constraint fk_przydzialy_01;
+
+alter table przydzialy
+add constraint fk_przydzialy_01 foreign key (id_projektu) references projekty(id_projektu) on delete cascade;
+
+delete from projekty
+where opis_projektu = 'Sieci kręgosłupowe'
+
+select * from przydzialy 
+select * from projekty 
+
+14. select constraint_name,  constraint_type, status
+from user_constraints
+where table_name = 'PRZYDZIALY'
+
+15. drop table projekty cascade constraints;
+
+select constraint_name,  constraint_type, status
+from user_constraints
+where table_name = 'PRZYDZIALY'
+
+Usunięto ograniczenie fk_przydzialy_01, ponieważ jako klucz obcy korzystało z opis_projektu.
+
+16. drop table przydzialy;
+drop table projekty_kopia;
+
+select table_name
+from user_tables;
+
