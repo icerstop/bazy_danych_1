@@ -1,0 +1,83 @@
+1. create or replace view asystenci as
+select
+    nazwisko,
+    (placa_pod + placa_dod) as placa,
+    'lat: ' || extract(year from((date'2024-01-01' - zatrudniony) year to month))
+    || ', miesięcy: ' || extract(month from((date'2024-01-01' - zatrudniony) year to month)) as staz
+from pracownicy
+where etat = 'ASYSTENT';
+
+select nazwisko, placa, staz
+from asystenci
+order by nazwisko
+
+2. create or replace view place as
+
+select 
+    id_zesp,
+    round(avg(placa_pod+coalesce(placa_dod, 0)),2) as srednia,
+    round(min(placa_pod+coalesce(placa_dod, 0)),2) as mini,
+    round(max(placa_pod+coalesce(placa_dod, 0)),2) as maxi,
+    round(sum(placa_pod+coalesce(placa_dod, 0)),2) as fundusz,
+    count(placa_pod) as l_pensji,
+    count(placa_dod) as l_dodatkow
+    from pracownicy
+    group by id_zesp;
+
+select * from place 
+order by id_zesp
+
+3. select p.nazwisko,
+(p.placa_pod + coalesce(p.placa_dod, 0)) as placa_razem
+from pracownicy p
+join place p1 on p.id_zesp = p1.id_zesp
+where (p.placa_pod + coalesce(p.placa_dod, 0)) < p1.srednia 
+order by p.nazwisko 
+
+4. create or replace view place_minimalne as
+
+select
+    id_prac,
+    nazwisko,
+    etat,
+    placa_pod
+    from pracownicy
+    where placa_pod < 700
+    with check option constraint ck_place_minimalne;
+
+5. update place_minimalne 
+set placa_pod = 800
+where nazwisko = 'HAPKE'
+
+Nie udało się wykonać, ponieważ jest niezgodne z ograniczeniem integralnościowym ck_place_minimalne.
+
+6. create or replace view prac_szef as
+
+select
+    p.id_prac,
+    p.id_szefa,
+    p.nazwisko as pracownik,
+    p.etat,
+    (select s.nazwisko from pracownicy s where s.id_prac = p.id_szefa) as szef
+from pracownicy p
+order by p.nazwisko;
+
+7. create or replace view zarobki as
+
+select
+    p.id_prac,
+    p.nazwisko,
+    p.etat,
+    p.placa_pod
+    from pracownicy p
+    join pracownicy s on p.id_szefa = s.id_prac
+    where p.placa_pod <= s.placa_pod
+    with check option;
+
+8. select view_name, text
+from user_views
+
+9. select column_name, updatable, insertable, deletable
+from user_updatable_columns
+where table_name = 'PRAC_SZEF'
+
