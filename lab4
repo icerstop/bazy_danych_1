@@ -1,0 +1,51 @@
+1. SELECT pracownicy.nazwisko, pracownicy.etat, pracownicy.id_zesp, zespoly.nazwa as nazwa from pracownicy INNER JOIN zespoly ON zespoly.id_zesp = pracownicy.id_zesp ORDER BY pracownicy.nazwisko
+
+
+
+2. SELECT pracownicy.nazwisko, pracownicy.etat, pracownicy.id_zesp, zespoly.nazwa AS nazwa FROM pracownicy INNER JOIN zespoly ON zespoly.id_zesp = pracownicy.id_zesp WHERE zespoly.adres='PIOTROWO 3A'  ORDER BY  pracownicy.nazwisko
+
+
+
+3. SELECT pracownicy.nazwisko, pracownicy.etat, pracownicy.placa_pod, etaty.placa_min, etaty.placa_max from pracownicy INNER JOIN etaty ON etaty.nazwa = pracownicy.etat ORDER BY pracownicy.etat, pracownicy.nazwisko
+
+
+
+4. SELECT pracownicy.nazwisko, pracownicy.etat, pracownicy.placa_pod, etaty.placa_min, etaty.placa_max, case when pracownicy.placa_pod BETWEEN etaty.placa_min AND etaty.placa_max THEN 'OK' ELSE 'NIE' END AS czy_pensja_ok from pracownicy INNER JOIN etaty ON etaty.nazwa = pracownicy.etat ORDER BY pracownicy.etat, pracownicy.nazwisko
+
+
+
+5. SELECT pracownicy.nazwisko, pracownicy.etat, pracownicy.placa_pod, etaty.placa_min, etaty.placa_max, case when pracownicy.placa_pod BETWEEN etaty.placa_min AND etaty.placa_max THEN 'OK' ELSE 'NIE' END AS czy_pensja_ok from pracownicy INNER JOIN etaty ON etaty.nazwa = pracownicy.etat WHERE pracownicy.placa_pod < etaty.placa_min OR pracownicy.placa_pod > etaty.placa_max ORDER BY pracownicy.etat, pracownicy.nazwisko
+
+
+
+6. SELECT pracownicy.nazwisko, pracownicy.placa_pod, pracownicy.etat, etaty.nazwa AS kat_plac, etaty.placa_min, etaty.placa_max FROM pracownicy INNER JOIN etaty ON pracownicy.placa_pod BETWEEN etaty.placa_min AND etaty.placa_max ORDER BY pracownicy.nazwisko, kat_plac
+
+
+
+7. SELECT pracownicy.nazwisko, pracownicy.placa_pod, pracownicy.etat, etaty.nazwa AS kat_plac, etaty.placa_min, etaty.placa_max FROM pracownicy INNER JOIN etaty ON pracownicy.placa_pod BETWEEN etaty.placa_min AND etaty.placa_max WHERE etaty.nazwa = 'SEKRETARKA' ORDER BY pracownicy.nazwisko, kat_plac
+
+
+
+8. SELECT p.nazwisko AS pracownik, p.id_prac, s.nazwisko AS szef, s.id_prac AS id_szefa FROM pracownicy p INNER JOIN pracownicy s ON p.id_szefa = s.id_prac ORDER BY p.nazwisko
+
+
+
+9. SELECT p.nazwisko AS pracownik, TO_CHAR(p.zatrudniony, 'YYYY.MM.DD') as prac_zatrudniony, s.nazwisko AS szef, TO_CHAR(s.zatrudniony, 'YYYY.MM.DD') as szef_zatrudniony, EXTRACT(YEAR FROM p.zatrudniony)-EXTRACT(YEAR FROM s.zatrudniony) AS lata FROM pracownicy p INNER JOIN pracownicy s ON p.id_szefa = s.id_prac WHERE EXTRACT(YEAR FROM p.zatrudniony) - EXTRACT(YEAR FROM s.zatrudniony) <=10 ORDER BY p.zatrudniony, p.nazwisko
+
+
+
+10. SELECT zespoly.nazwa, count(pracownicy.id_zesp), avg(pracownicy.placa_pod) as liczba from zespoly inner join pracownicy on zespoly.id_zesp = pracownicy.id_zesp group by zespoly.nazwa order by zespoly.nazwa
+
+
+
+11. SELECT zespoly.nazwa, 
+
+CASE 
+
+    WHEN COUNT(pracownicy.id_zesp) <= 2 THEN 'mały'
+
+    WHEN COUNT(pracownicy.id_zesp) BETWEEN 3 AND 6 THEN 'średni'
+
+    WHEN COUNT(pracownicy.id_zesp) >= 7 THEN 'duży'
+
+END AS ETYKIETA from zespoly inner join pracownicy on pracownicy.id_zesp = zespoly.id_zesp GROUP BY zespoly.nazwa HAVING COUNT(pracownicy.id_prac) > 0 
