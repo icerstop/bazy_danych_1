@@ -1,0 +1,87 @@
+1. select p.nazwisko, p.id_zesp, z.nazwa 
+from pracownicy p 
+left join zespoly z on p.id_zesp = z.id_zesp 
+order by p.nazwisko
+
+2. select z.nazwa, z.id_zesp, coalesce(p.nazwisko, 'brak pracownikow') 
+from zespoly z 
+left outer join pracownicy p on z.id_zesp = p.id_zesp 
+order by z.nazwa, p.nazwisko
+
+3. select coalesce(z.nazwa, 'brak zespolu') as zespol, coalesce(p.nazwisko, 'brak pracownikow') as pracownik 
+from zespoly z 
+full outer join pracownicy p on z.id_zesp = p.id_zesp 
+order by z.nazwa, p.nazwisko
+
+4. select z.nazwa as zespol, count(p.id_prac) as liczba, coalesce(sum(p.placa_pod), 0) as suma_plac 
+from zespoly z 
+left outer join pracownicy p on z.id_zesp = p.id_zesp 
+group by z.nazwa 
+order by z.nazwa
+
+5. select z.nazwa as nazwa 
+from zespoly z 
+left outer join pracownicy p on z.id_zesp = p.id_zesp 
+having count(p.id_prac) = 0 
+group by z.nazwa 
+order by z.nazwa
+
+6. select p.nazwisko as pracownik, p.id_prac, s.nazwisko as szef, s.id_prac as id_szefa 
+from pracownicy p 
+left outer join pracownicy s on p.id_szefa = s.id_prac 
+order by p.nazwisko
+
+7. select p.nazwisko as pracownik, count(s.id_prac) 
+from pracownicy p 
+left join pracownicy s on p.id_prac = s.id_szefa
+group by p.id_prac, p.nazwisko
+order by p.nazwisko
+
+
+8. select p.nazwisko as nazwisko, p.etat, p.placa_pod, z.nazwa, s.nazwisko as szef
+from pracownicy p
+left join zespoly z on p.id_zesp = z.id_zesp
+left join pracownicy s on p.id_szefa = s.id_prac
+order by p.nazwisko
+
+9. select nazwisko, nazwa 
+from pracownicy, zespoly 
+order by nazwisko, nazwa
+
+10. select count (*) 
+from etaty, pracownicy, zespoly
+
+11. select etat
+from pracownicy
+where extract(year from zatrudniony) = 1992
+intersect
+select etat
+from pracownicy 
+where extract(year from zatrudniony) = 1993
+order by etat
+
+12.select id_zesp 
+from zespoly
+except
+select id_zesp
+from pracownicy
+
+13. select z.id_zesp, z.nazwa 
+from zespoly z
+except
+select p.id_zesp, z.nazwa
+from pracownicy p
+join zespoly z on z.id_zesp = p.id_zesp
+
+14. select nazwisko, placa_pod, 'Powyżej 480 złotych'
+from pracownicy 
+where placa_pod > 480
+union
+select nazwisko, placa_pod, 'Dokładnie 480 złotych'
+from pracownicy
+where placa_pod = 480
+union
+select nazwisko, placa_pod, 'Poniżej 480 złotych'
+from pracownicy
+where placa_pod < 480
+order by placa_pod
